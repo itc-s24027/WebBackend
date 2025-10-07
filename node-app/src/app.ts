@@ -33,6 +33,8 @@ import fs from "node:fs/promises"
 // )
 
 const index_template = pug.compileFile('./index.pug')
+const other_template = pug.compileFile('./other.pug')
+
 const style_css = await fs.readFile('./style.css', 'utf8')
 
 //上記の関数を切り分ける　教科書p79
@@ -63,12 +65,17 @@ async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse
             res.end()
             break
         }
-        case '/style.css':
-            // スタイルシート(style.css)にアクセスが来たときの処理
-            res.writeHead(200, {'Content-Type': 'text/css; charset=utf-8'})
-            res.write(style_css)
+
+        case '/other': {
+            const content = other_template({
+                title: 'Other',
+                content: 'これは新しく用意したページです。'
+            })
+            res.writeHead(200, {'Content-Type': 'text/html; charset=UTF-8'})
+            res.write(content)
             res.end()
             break
+        }
 
         default:
             // 想定していないパスへのアクセスが来たときの処理
@@ -76,9 +83,4 @@ async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse
             res.end('no page...')
             break
     }
-    // const content = pug.renderFile('./index.pug', {
-    //     title: 'Indexページ',
-    //     content: 'これはテンプレートを使ったサンプルページです。'
-    // })
-
 }

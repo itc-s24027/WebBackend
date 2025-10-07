@@ -8,9 +8,16 @@ html(lang="ja")
         script(src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4")
 
     body(class='container mx-auto bg-white dark:bg-gray-950 dark:text-white')
+        //ダークモード適用
+        //container
+        //要素を「中央寄せの固定幅コンテナ」にします。
+        //画面サイズ（レスポンシブ）に応じて自動的に横幅が変わります。
+
+        //mx-auto
+        //m → margin（余白）
+        //x → 左右方向（horizontal）
+        //auto → 自動余白（中央寄せ）
         header
             h1(class='text-5xl/14 font-light mb-4')= title
         main
             p= content
-            .mt-2
-                a(href='/other' class='font-medium text-blue-600 dark:text-blue-500 hover:underline') Other Page に移動 >>
