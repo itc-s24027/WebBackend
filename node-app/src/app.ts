@@ -1,5 +1,7 @@
 import http from "node:http"
 import pug from "pug"
+import url from "node:url"
+import fs from "node:fs/promises"
 
 // const server = http.createServer(
 //     (request, response) => {
@@ -30,20 +32,53 @@ import pug from "pug"
 //     }
 // )
 
+const index_template = pug.compileFile('./index.pug')
+const style_css = await fs.readFile('./style.css', 'utf8')
 
 //上記の関数を切り分ける　教科書p79
 const server = http.createServer(getFromClient)
 
 server.listen(3210) //ポート番号3210でサーバーを待ち受けるように設定
-console.log('Server start!')//実行するとコンソールにメッセージが表示される
+console.log('Server start(^o^)')//実行するとコンソールにメッセージが表示される
 
 //createServer の処理
 async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse) {
-    const content = pug.renderFile('./index.pug', {
-        title: 'Indexページ',
-        content: 'これはテンプレートを使ったサンプルページです。'
-    })
-    res.writeHead(200, {'Content-Type': 'text/html; charset=UTF-8'})
-    res.write(content)
-    res.end()
+    const url_parts = new url.URL(req.url || '', 'http://localhost:3210')
+    /*
+    第1引数にはパースしたい文字列を渡します。ただし、そのままリクエストオブジェクトの url プロパティを渡そうとすると、TypeScript の型チェックエラーが発生するため、
+    or 演算子(||) を使用して、undefined または null への対応をします。
+    第2引数には、ベース URL となる文字列を渡します。
+    第1引数がスキーマ (http など) やドメイン名を含むフルパス表記であれば省略することが可能です。
+     */
+
+    switch (url_parts.pathname) {
+        case '/': {
+            // Index(トップ)ページにアクセスが来たときの処理
+            const content = index_template({
+                title: 'Index',
+                content: 'これはテンプレートを使ったサンプルページです。'
+            })
+            res.writeHead(200, {'Content-Type': 'text/html; charset=UTF-8'})
+            res.write(content)
+            res.end()
+            break
+        }
+        case '/style.css':
+            // スタイルシート(style.css)にアクセスが来たときの処理
+            res.writeHead(200, {'Content-Type': 'text/css; charset=utf-8'})
+            res.write(style_css)
+            res.end()
+            break
+
+        default:
+            // 想定していないパスへのアクセスが来たときの処理
+            res.writeHead(404, {'Content-Type': 'text/plain'})
+            res.end('no page...')
+            break
+    }
+    // const content = pug.renderFile('./index.pug', {
+    //     title: 'Indexページ',
+    //     content: 'これはテンプレートを使ったサンプルページです。'
+    // })
+
 }
