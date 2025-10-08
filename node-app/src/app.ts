@@ -2,6 +2,7 @@ import http from "node:http"
 import pug from "pug"
 import url from "node:url"
 import fs from "node:fs/promises"
+import qs from 'node:querystring'
 
 // const server = http.createServer(
 //     (request, response) => {
@@ -55,25 +56,12 @@ async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse
 
     switch (url_parts.pathname) {
         case '/': {
-            // Index(トップ)ページにアクセスが来たときの処理
-            const content = index_template({
-                title: 'Index',
-                content: 'これはテンプレートを使ったサンプルページです。'
-            })
-            res.writeHead(200, {'Content-Type': 'text/html; charset=UTF-8'})
-            res.write(content)
-            res.end()
+            await response_index(req, res) //中身を直接書かずに関数に置き換えた
             break
         }
 
         case '/other': {
-            const content = other_template({
-                title: 'Other',
-                content: 'これは新しく用意したページです。'
-            })
-            res.writeHead(200, {'Content-Type': 'text/html; charset=UTF-8'})
-            res.write(content)
-            res.end()
+            await response_other(req, res) //中身を直接書かずに関数に置き換えた
             break
         }
 
@@ -82,5 +70,56 @@ async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse
             res.writeHead(404, {'Content-Type': 'text/plain'})
             res.end('no page...')
             break
+    }
+}
+
+async function response_index(req:http.IncomingMessage, res:http.ServerResponse) {
+    const msg = 'これはIndexページです。'
+    const content = index_template({
+        title: 'Index',
+        content: msg,
+    })
+    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
+    res.write(content)
+    res.end()
+}
+
+// フォーム送信の処理
+async function response_other(req:http.IncomingMessage, res:http.ServerResponse) {
+    let msg = 'これはOtherページです。'
+
+    // POST送信されているか確認
+    if (req.method ==='POST') {
+        const post_data = await ( new Promise<qs.ParsedUrlQuery>((resolve, reject) => {
+            let body = ''
+            req.on('data', (chunk) => {
+                body += chunk
+            })
+            req.on('end', () => {
+                try {
+                    resolve(qs.parse(body))
+                } catch (e) {
+                    console.error(e)
+                    reject(e)
+                }
+            })
+        }))
+        msg += `あなたは「${post_data.msg}」と書きました。`
+        const content = other_template({
+            title: 'Other',
+            content: msg,
+        })
+        res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
+        res.write(content)
+        res.end()
+    } else {
+        //POST以外のアクセス
+        const content = other_template({
+            title: 'Other',
+            content: 'ページがありません',
+        })
+        res.writeHead(404, {'Content-Type': 'text/html; charset=utf-8'})
+        res.write(content)
+        res.end()
     }
 }
