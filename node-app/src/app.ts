@@ -42,7 +42,16 @@ const style_css = await fs.readFile('./style.css', 'utf8')
 const server = http.createServer(getFromClient)
 
 server.listen(3210) //ポート番号3210でサーバーを待ち受けるように設定
-console.log('Server start(^o^)')//実行するとコンソールにメッセージが表示される
+console.log('Server start☆ミ')//実行するとコンソールにメッセージが表示される
+
+const data = {
+    'Taro': '090-999-999',
+    'Hanako': '080-888-888',
+    'Sachiko': '070-777-777',
+    'Ichiro': '060-666-666'
+}
+
+//=================ここまでメインプログラム==========================
 
 //createServer の処理
 async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -78,6 +87,7 @@ async function response_index(req:http.IncomingMessage, res:http.ServerResponse)
     const content = index_template({
         title: 'Index',
         content: msg,
+        data
     })
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
     res.write(content)
@@ -88,9 +98,19 @@ async function response_index(req:http.IncomingMessage, res:http.ServerResponse)
 async function response_other(req:http.IncomingMessage, res:http.ServerResponse) {
     let msg = 'これはOtherページです。'
 
-    // POST送信されているか確認
+    // POST送信されているか確認 POSTされた場合のみ処理
     if (req.method ==='POST') {
         const post_data = await ( new Promise<qs.ParsedUrlQuery>((resolve, reject) => {
+            //new Promise((resolve, reject) => {
+            //     時間がかかる処理
+            //     成功したら resolve(結果)
+            //     失敗したら reject(エラー)
+            // })
+
+            //<qs.ParsedUrlQuery> は「型注釈」
+            // Promise が「どんな型の値を返すか」を TypeScript に伝えています。
+
+
             let body = ''
             req.on('data', (chunk) => {
                 body += chunk
@@ -100,7 +120,7 @@ async function response_other(req:http.IncomingMessage, res:http.ServerResponse)
                     resolve(qs.parse(body))
                 } catch (e) {
                     console.error(e)
-                    reject(e)
+                    reject(e) //もしエラーが出たら reject(e) でPromiseを失敗させる
                 }
             })
         }))
