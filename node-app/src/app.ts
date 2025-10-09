@@ -85,6 +85,8 @@ async function response_index(req:http.IncomingMessage, res:http.ServerResponse)
         const post_data = await parse_body(req)
         data.msg = post_data.msg as string
 
+        setCookie('msg', data.msg, res)
+
         // リダイレクトする
         res.writeHead(302, 'Found', {
             'Location': '/',
@@ -158,12 +160,52 @@ function parse_body(req: http.IncomingMessage): Promise<qs.ParsedUrlQuery> {
 }
 
 function write_index(req: http.IncomingMessage, res: http.ServerResponse) {
+    const cookie_data = getCookie(req)
     const content = index_template({
         title: 'Index',
         content: '※伝言を表示します。',
-        data
+        data,
+        cookie_data,
     })
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
     res.write(content)
     res.end()
 }
+
+function setCookie(key: string, value: string, res: http.ServerResponse) {
+    const encoded_cookie = qs.stringify({[key]: value})
+    res.setHeader('Set-Cookie', [encoded_cookie])
+}
+        /*
+        key と value（保存したい名前と値）を受け取る
+        例：setCookie("username", "Taro", res)
+
+        qs.stringify({ [key]: value })
+        → これはオブジェクトを "username=Taro" のような文字列に変換しています。
+        qs（querystring）モジュールを使っています。
+
+        res.setHeader('Set-Cookie', [encoded_cookie])
+        → HTTPヘッダーに Set-Cookie: username=Taro を設定します。
+        これにより、ブラウザがCookieを保存します。
+         */
+
+function getCookie(req: http.IncomingMessage) {
+    const cookie_data = req.headers.cookie != undefined //req.headers.cookie ブラウザが送ったCookie文字列を取得
+        ? req.headers.cookie : ''
+    const data = cookie_data.split(';') // cookieを分割
+        .map(raw_cookie => qs.parse(raw_cookie.trim()))
+        .reduce((acc, cookie) => ({...acc, ...cookie}))
+    return data
+}
+        /*
+        ["username=Taro", "theme=dark"] → [ {username: "Taro"}, {theme: "dark"} ]
+
+        .reduce((acc, cookie) => ({...acc, ...cookie}))
+        これは配列の中のオブジェクトを1つのオブジェクトにまとめる処理です。
+        [{username: "Taro"}, {theme: "dark"}]
+        ↓
+        {username: "Taro", theme: "dark"}
+
+        acc は「今までの結果」
+        cookie は「今回の要素」
+         */
