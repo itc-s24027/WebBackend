@@ -44,12 +44,12 @@ const server = http.createServer(getFromClient)
 server.listen(3210) //ポート番号3210でサーバーを待ち受けるように設定
 console.log('Server start☆ミ')//実行するとコンソールにメッセージが表示される
 
-const data = {
-    'Taro': '090-999-999',
-    'Hanako': '080-888-888',
-    'Sachiko': '070-777-777',
-    'Ichiro': '060-666-666'
-}
+const data = [
+    {id: 1, name: 'Taro', number: '09-999-999'},
+    {id: 2, name: 'Hanako', number: '080-888-888'},
+    {id: 3, name: 'Sachiko', number: '070-777-777'},
+    {id: 4, name: 'Ichiro', number: '060-666-666'},
+]
 
 //=================ここまでメインプログラム==========================
 
