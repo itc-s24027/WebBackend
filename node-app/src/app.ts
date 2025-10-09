@@ -44,12 +44,9 @@ const server = http.createServer(getFromClient)
 server.listen(3210) //ポート番号3210でサーバーを待ち受けるように設定
 console.log('Server start☆ミ')//実行するとコンソールにメッセージが表示される
 
-const data = [
-    {id: 1, name: 'Taro', number: '09-999-999'},
-    {id: 2, name: 'Hanako', number: '080-888-888'},
-    {id: 3, name: 'Sachiko', number: '070-777-777'},
-    {id: 4, name: 'Ichiro', number: '060-666-666'},
-]
+const data = {
+    msg: 'no message...'
+}
 
 //=================ここまでメインプログラム==========================
 
@@ -83,15 +80,19 @@ async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse
 }
 
 async function response_index(req:http.IncomingMessage, res:http.ServerResponse) {
-    const msg = 'これはIndexページです。'
-    const content = index_template({
-        title: 'Index',
-        content: msg,
-        data
-    })
-    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
-    res.write(content)
-    res.end()
+    if (req.method === 'POST') { //POSTでアクセスされてるか確認
+        //POSTアクセス時の処理
+        const post_data = await parse_body(req)
+        data.msg = post_data.msg as string
+
+        // リダイレクトする
+        res.writeHead(302, 'Found', {
+            'Location': '/',
+        })
+        res.end()
+    } else {
+        write_index(req, res)
+    }
 }
 
 // フォーム送信の処理
@@ -112,10 +113,10 @@ async function response_other(req:http.IncomingMessage, res:http.ServerResponse)
 
 
             let body = ''
-            req.on('data', (chunk) => {
+            req.on('data', (chunk) => { //データ受信のイベント処理
                 body += chunk
             })
-            req.on('end', () => {
+            req.on('end', () => { //データ受信終了のイベント処理
                 try {
                     resolve(qs.parse(body))
                 } catch (e) {
@@ -142,4 +143,27 @@ async function response_other(req:http.IncomingMessage, res:http.ServerResponse)
         res.write(content)
         res.end()
     }
+}
+
+function parse_body(req: http.IncomingMessage): Promise<qs.ParsedUrlQuery> {
+    return new Promise((resolve, reject) => {
+        let body = ''
+        req.on('data', (chunk) => { //データ受信のイベント処理
+            body += chunk
+        })
+        req.on('end', () => { //データ受信終了のイベント処理
+            resolve(qs.parse(body))
+        })
+    })
+}
+
+function write_index(req: http.IncomingMessage, res: http.ServerResponse) {
+    const content = index_template({
+        title: 'Index',
+        content: '※伝言を表示します。',
+        data
+    })
+    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
+    res.write(content)
+    res.end()
 }
